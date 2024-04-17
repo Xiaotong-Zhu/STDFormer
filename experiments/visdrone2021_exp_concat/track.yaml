@@ -1,0 +1,43 @@
+DATA:
+    MOT_ROOT: "./datasets/visdrone/det" # default: mot17
+    TYPE: "test" # 有验证状态的话这里是trian_half和val_half
+    DETECTOR: "uav"
+    HISTORY_FRAME_NUM: 15
+    HISTORY_FRAME_GAP: 1
+    TRACK_BUFFER: 15
+
+MATCHER:
+    COST_BBOX: 0.05
+    COST_GIOU: 2.0
+    MIN_GIOU_I: 0.1
+    MIN_GIOU_II: 0.0
+    MIN_GIOU_III: 0.1
+
+MODEL:
+    WEIGHT_PATH: "./ckpts/visdrone2021_exp_concat/model_epoch_1270.pth.tar"
+
+################################ Embedding #########################
+    ################################ Embedding #########################
+    NUM_EMBEDDINGS: 5000
+    EMBEDDING_SIZE: 128
+    EMBEDDING_LAYERS: [128,512,512,128]
+    TRACKEMBEDDING_LAYERS: [32, 64, 128]
+    TRACK_POS_EMB_TYPE: 'sine' # options: ['sine', 'learned']
+    TRACKEMBEDDING_DROPOUT: 0.
+    DETECTEMBEDDING_LAYERS: [32, 64, 128]
+    DETECTEMBEDDING_DROPOUT: 0.
+    
+    ############################## STD_Encoder #########################
+    STD_ENCODER_LAYER_NAMES: ['TEncoder', 'TimeTokenCross',  'TEncoder', 'TimeTokenCross', 'TEncoder', 'TimeTokenCross', 'TDDecoder', 'TDDecoder','TDDecoder']
+    STD_DECODER_LAYER_NAMES: ['Track_Decoder','Track_Decoder', 'Track_Decoder']
+    STD_HEAD: 4
+    STD_ATTENTION: 'full'  # options: ['linear', 'full']
+    FULL_ATTENTION_DROPOUT: 0.
+    
+    
+    ######### 任务输出头：轨迹当前帧预测头、关联匹配头 ###############
+    TPHEAD_LAYERS: [256, 512, 512,256,128,64,32]
+    SIM_TEMPERATURE: 1000 # dsl_1:0.1, dsl_2:1000
+
+RESULT:
+    PATH: "./results/visdrone_test_buffer5/"

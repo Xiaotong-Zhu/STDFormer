@@ -1,0 +1,97 @@
+# --------------------------------------- data ------------------------------------------
+DATA:
+    MOT_ROOT: "./datasets/visdrone/det" # default: mot17
+    TYPE: "trainval" # 有验证状态的话这里是trian_half和val_half
+    DETECTOR: "uav"
+    HISTORY_FRAME_NUM: 15
+    HISTORY_FRAME_GAP: 1
+    MAX_OBJECT: 200
+    MATCHER:
+      COST_BBOX: 5.0
+      COST_GIOU: 2.0
+      MIN_GIOU: 0.5
+
+# ------------------------------------ model & loss -----------------------------------------------
+MODEL:
+    ################################ Embedding #########################
+    NUM_EMBEDDINGS: 5000
+    EMBEDDING_SIZE: 128
+    EMBEDDING_LAYERS: [128,512,512,128]
+    TRACKEMBEDDING_LAYERS: [32, 64, 128]
+    TRACK_POS_EMB_TYPE: 'sine' # options: ['sine', 'learned']
+    TRACKEMBEDDING_DROPOUT: 0.
+    DETECTEMBEDDING_LAYERS: [32, 64, 128]
+    DETECTEMBEDDING_DROPOUT: 0.
+    
+    ############################## STD_Encoder #########################
+    STD_ENCODER_LAYER_NAMES: ['TEncoder', 'TimeTokenCross',  'TEncoder', 'TimeTokenCross', 'TEncoder', 'TimeTokenCross', 'TDDecoder', 'TDDecoder','TDDecoder']
+    STD_DECODER_LAYER_NAMES: ['Track_Decoder','Track_Decoder', 'Track_Decoder']
+    STD_HEAD: 4
+    STD_ATTENTION: 'full'  # options: ['linear', 'full']
+    FULL_ATTENTION_DROPOUT: 0.
+    
+    
+    ######### 任务输出头：轨迹当前帧预测头、关联匹配头 ###############
+    TPHEAD_LAYERS: [128, 512, 512,128]
+    SIM_TEMPERATURE: 1000 # dsl_1:0.1, dsl_2:1000
+
+# ----------------------------------loss---------------------------------------------
+SOCIAL_NCE:
+    TEMPERATURE: 1000 # dal-1:0.2 / 0.07 / 0.1   dsl-2:1000
+    ENCODER_LAYERS: [32, 64, 128]
+
+LOSS:
+    FOCAL_ALPHA: 0.25
+    FOCAL_GAMMA: 2.0
+    FOCAL_POS_WEIGHT: 1.0
+    FOCAL_NEG_WEIGHT: 1.0
+    REGR_WEIGHT: 5.0
+    GIOU_WEIGHT: 2.0
+    SOCIAL_NCE_WEIGHT: 1.0 # option: 1.0 / 0.1
+    MOTLOSS_WEIGHT: 1.0
+    TPLOSS_WEIGHT: 1.0
+
+# ----------------------------------------- train -----------------------------------------
+TRAIN:
+    BATCH_SIZE: 48 # 160
+    EPOCH: 1275
+    GRADIENT_CLIP: 0.5
+    ITER_LOG_INTERVAL: 2
+    EPOCH_LOG_MOD: 'specified' # option: interval / specified
+    EPOCH_LOG_INTERVAL: 50 
+    EPOCH_LOG_SPECIFIED: [30,70,150,310,630,1270] # 和MSLR_MILESTONES配套 [125,200,250,275,290];  CosineAnnealingWarmRestarts
+    VAL: True
+
+OPTIMIZER:
+    NAME: "adamw" # option: "adam" / "adamw"
+    LEARNING_RATE: 0.001
+    ADAM_DECAY: 0.
+    ADAMW_DECAY: 0.1
+
+SCHEDULER:
+    NAME: 'CosineAnnealingWarmRestarts'  # [ReduceLROnPlateau, MultiStepLR, CosineAnnealing, CosineAnnealingWarmRestarts, ExponentialLR]
+    SCHEDULER_INTERVAL: 'epoch' # [epoch, step]
+    MSLR_MILESTONES: [50, 125,200,250,275,290]  # MSLR: MultiStepLR
+    MSLR_GAMMA: 0.01 # MultiStepLR
+    COSA_TMAX: 10  # COSA: CosineAnnealing, CosineAnnealingWarmRestarts
+    COSA_TMULT: 2 # CosineAnnealingWarmRestarts
+    ELR_GAMMA: 0.999992  # ELR: ExponentialLR, this value for 'step' interval
+    RLR_FACTOR: 0.1
+    RLR_PATIENCE: 3
+    RLR_MIN_LR: 0.00000000000000000001
+    RLR_EPS: 0.00000000000000000001
+    
+    WARMUP: True
+    WARMUP_EPOCH : 1 # epoch:5 / iter时也默认填epoch，warmup_t=warmup_epoch*epoch_len
+    WARMUP_BY_EPOCH: False
+    WARMUP_MODE: "fix" # "fix", "auto", or "factor". Defaults to "fix"
+    WARMUP_INIT_LR: 0.0000000001 # "fix" mode必须有. Defaults to None.fix模式的warmup初始学习率
+    WARMUP_FACTOR: 0.0000000001 # "factor" mode必须有. Defaults to None. warmup的初始学习率为base_lr * warmup_factor
+
+VAL:
+    STATE: False
+    BATCH_SIZE: 128
+    ITER_LOG_INTERVAL: 5
+
+MISC:
+    SIMILARITY_VIS_SAMPLE: 10 # 随机可视化,不要大于batch_size
