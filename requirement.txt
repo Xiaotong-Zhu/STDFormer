@@ -1,0 +1,12 @@
+numpy
+opencv-python
+pandas
+einops
+scipy
+pyyaml
+tensorboard
+yacs
+seaborn
+loguru
+packaging
+tqdm
